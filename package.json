@@ -5,14 +5,11 @@
   "main": "src/index.js",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
-    "db:create": "wrangler d1 create RememberDay",
-    "db:init": "wrangler d1 execute RememberDay --file=./schema.sql",
-    "db:init:remote": "wrangler d1 execute RememberDay --remote --file=./schema.sql"
+    "deploy": "wrangler deploy"
   },
   "keywords": [
     "cloudflare-workers",
-    "d1",
+    "durable-objects",
     "anniversary",
     "message-board",
     "homepage"

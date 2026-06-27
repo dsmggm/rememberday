@@ -1,5 +1,10 @@
--- RememberDay 数据库初始化脚本
--- 用于存储留言板数据（留言与回复）
+-- RememberDay 建表 SQL（参考）
+--
+-- 说明：本项目使用 Durable Objects + 内嵌 SQLite 存储留言数据，
+-- 上述建表语句已内置于 src/index.js 的 MessagesDB.ensureTable() 中，
+-- 首次访问留言板时自动执行（CREATE TABLE IF NOT EXISTS，幂等）。
+--
+-- 本文件仅作为表结构参考，无需手动运行。
 
 CREATE TABLE IF NOT EXISTS messages (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
