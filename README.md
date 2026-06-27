@@ -22,93 +22,104 @@ rememberday/
 │   └── app.js          # 前端交互逻辑
 ├── src/
 │   └── index.js        # Worker 入口：API 路由 + 静态资源分发
-├── schema.sql          # D1 数据库建表脚本
+├── schema.sql          # D1 数据库建表脚本（可选，项目支持自动建表）
 ├── wrangler.toml       # Cloudflare Workers 配置（环境变量 / D1 绑定）
 ├── package.json
 └── README.md
 ```
 
-## 🚀 快速开始
+## 🚀 部署指南（GitHub 导入方式，全程无需命令行）
 
-### 1. 安装依赖
+本项目推荐通过 **Cloudflare 控制台导入 GitHub 仓库** 的方式部署，连接后每次 push 代码都会自动重新构建部署。
 
-```bash
-npm install
-```
+### 前置准备
 
-> 也可以直接使用全局安装的 wrangler：`npm i -g wrangler`
+- 一个 **GitHub** 账号
+- 一个 **Cloudflare** 账号（免费即可）
 
-### 2. 登录 Cloudflare
+### 第 1 步：Fork 仓库
 
-```bash
-npx wrangler login
-```
+将本项目 Fork 到你自己的 GitHub 账号下（项目右上角 Fork 按钮）。
 
-### 3. 创建 D1 数据库（名为 RememberDay）
+### 第 2 步：在 Cloudflare 创建 D1 数据库
 
-```bash
-npx wrangler d1 create RememberDay
-```
+1. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com/)
+2. 左侧菜单进入 **Workers & Pages** → **D1**
+3. 点击 **Create database**
+4. **Database name** 填入 `RememberDay`，点击创建
+5. 创建完成后，在数据库详情页找到 **Database ID**（形如 `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`），复制备用
 
-执行后会输出类似如下内容：
+### 第 3 步：在 GitHub 仓库中填写数据库 ID 和纪念日信息
 
-```
-✅ Successfully created DB 'RememberDay'
-[[d1_databases]]
-binding = "DB"
-database_name = "RememberDay"
-database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"   # ← 复制这个 ID
-```
-
-**将输出的 `database_id` 填入 `wrangler.toml` 的 `[[d1_databases]]` 段：**
+在你 Fork 的仓库中，使用 GitHub 网页编辑器（点击文件右上角铅笔图标）编辑 [`wrangler.toml`](./wrangler.toml)：
 
 ```toml
 [[d1_databases]]
 binding = "DB"
 database_name = "RememberDay"
-database_id = "把上面复制的 ID 粘贴到这里"
+database_id = "在此粘贴第 2 步复制的 Database ID"   # ← 必须替换为真实 ID
 ```
 
-> 也可用快捷命令一步创建：`npm run db:create`
-
-### 4. 初始化数据库表
-
-```bash
-# 本地（开发环境）
-npm run db:init
-
-# 远程（生产环境）
-npm run db:init:remote
-```
-
-### 5. 配置纪念日环境变量
-
-编辑 `wrangler.toml` 中的 `[vars]` 段，修改为你自己的信息：
+同时修改 `[vars]` 段为你自己的纪念日信息：
 
 ```toml
 [vars]
-PERSON_A = "小明"        # 第一位主角名字
-PERSON_B = "小红"        # 第二位主角名字
-START_DATE = "2020-01-01" # 在一起的起始日期（YYYY-MM-DD）
+PERSON_A = "啊浪"          # 第一位主角名字
+PERSON_B = "小庄"          # 第二位主角名字
+START_DATE = "2020-01-01"  # 在一起的起始日期（YYYY-MM-DD）
 ```
 
-页面会根据 `START_DATE` 与当前日期自动计算「在一起 X 年 X 月 X 天」及总天数。修改后重新部署即可更新显示。
+保存后提交更改（Commit changes）。
 
-### 6. 本地开发
+> ⚠️ **重要**：`database_id` 必须替换为真实值，否则构建部署时会报错。Worker 名称（`name = "rememberday"`）请勿修改，需与下一步控制台中的 Worker 名称保持一致。
+
+### 第 4 步：在 Cloudflare 导入 GitHub 仓库
+
+1. 回到 Cloudflare Dashboard → **Workers & Pages**
+2. 点击 **Create application**
+3. 选择 **Import a repository** → **Get started**
+4. 首次使用需授权 Cloudflare 访问你的 GitHub 账号，授权后选择你 Fork 的 `rememberday` 仓库
+5. 配置项目（按如下填写）：
+
+   | 配置项 | 填写内容 |
+   | --- | --- |
+   | **Worker name** | `rememberday`（必须与 `wrangler.toml` 中的 `name` 一致） |
+   | **Production branch** | `main`（默认即可） |
+   | **Build command** | 留空（本项目无需构建步骤） |
+   | **Deploy command** | 保持默认 `npx wrangler deploy` |
+
+6. 点击 **Save and Deploy**
+
+### 第 5 步：验证部署
+
+- 部署过程中，可在 Worker 详情页的 **Deployments** 标签查看构建状态与日志
+- 构建成功后，访问 `https://rememberday.<你的子域>.workers.dev` 即可看到页面
+- **首次访问时 Worker 会自动创建数据库表**（留言板立即可用，无需手动建表）
+
+### 后续更新（持续集成）
+
+连接 GitHub 后，**以后每次向 `main` 分支推送代码，Cloudflare 都会自动重新构建并部署**：
+
+- 修改纪念日信息：编辑 `wrangler.toml` 的 `[vars]` 并提交即可
+- 修改页面或功能：提交代码改动即可自动生效
+- 无需再手动操作 Cloudflare 控制台
+
+## 🖥️ 本地开发（可选）
+
+如需在本地调试，可使用命令行：
 
 ```bash
-npm run dev
+npm install              # 安装依赖
+npm run dev              # 启动本地开发服务器，访问 http://localhost:8787
 ```
 
-浏览器打开 `http://localhost:8787` 预览。
-
-### 7. 部署到 Cloudflare
+本地开发需提前创建 D1 数据库并填好 `database_id`，或参考下方「数据库说明」手动初始化表结构：
 
 ```bash
-npm run deploy
+npx wrangler d1 create RememberDay           # 创建数据库
+npm run db:init                               # 本地初始化表
+npm run db:init:remote                        # 远程初始化表（可选）
 ```
-
-部署成功后会得到一个 `https://rememberday.<你的子域>.workers.dev` 地址，即可作为主页使用。
 
 ## ⚙️ 环境变量说明
 
@@ -118,13 +129,25 @@ npm run deploy
 | `PERSON_B` | 主角 B 的名字 | `小红` |
 | `START_DATE` | 在一起的起始日期，格式 `YYYY-MM-DD` | `2020-01-01` |
 
-以上变量均在 `wrangler.toml` 的 `[vars]` 段中配置。也可通过 Dashboard 的 Workers → 设置 → 变量 页面配置（敏感或需动态调整时推荐）。
+配置方式（二选一）：
+
+1. **在仓库中配置**（推荐）：编辑 `wrangler.toml` 的 `[vars]` 段，提交后自动部署生效。
+2. **在控制台中配置**：Dashboard → Worker 详情 → **Settings** → **Variables & Secrets**，添加上述变量。此方式无需改代码，但注意 `wrangler.toml` 中若有同名 `[vars]` 会在部署时覆盖控制台值。
 
 ## 🗄️ 数据库说明
 
 - 数据库类型：**Cloudflare D1**（基于 SQLite 的 Serverless 数据库）
 - 数据库名：**RememberDay**
 - 表名：`messages`
+
+### 自动初始化机制
+
+本项目内置自动建表能力，**无需手动执行 SQL**：
+
+- Worker 处理任何 `/api/*` 请求前，会先调用 `ensureDb()` 检查表结构
+- 首次访问时执行 `CREATE TABLE IF NOT EXISTS`（幂等），表已存在则跳过，**不会清空或改动已有数据**
+- 同一 isolate 内只执行一次，后续请求直接放行，几乎无性能损耗
+- 因此部署后**直接打开页面即自动建表完成**，留言板立即可用
 
 ### 表结构
 
@@ -134,9 +157,9 @@ npm run deploy
 | `name` | TEXT | 留言人昵称 |
 | `content` | TEXT | 留言内容 |
 | `parent_id` | INTEGER | 父留言 ID，顶层留言为 `NULL`，回复则指向被回复的留言 |
-| `created_at` | TEXT | 留言时间，默认本地时间 |
+| `created_at` | TEXT | 留言时间，默认北京时间（UTC+8） |
 
-建表 SQL 见 [`schema.sql`](./schema.sql)。
+建表 SQL 另见 [`schema.sql`](./schema.sql)，仅供手动初始化时参考使用。
 
 ## 🔌 API 接口
 
@@ -151,7 +174,7 @@ npm run deploy
 
 - **切换搜索引擎**：点击搜索框左侧「百度 / Bing / Google」按钮即可，选择会被浏览器本地记忆。
 - **设为主页**：因现代浏览器安全限制，无法通过脚本直接修改主页，点击右上角按钮后会给出对应浏览器的手动设置指引。
-- **修改纪念日信息**：仅需改 `wrangler.toml` 中 `[vars]` 的值并重新 `npm run deploy`，无需改代码。
+- **修改纪念日信息**：编辑 `wrangler.toml` 中 `[vars]` 的值并提交到 GitHub，Cloudflare 会自动重新部署生效，无需改其他代码。
 
 ## 📄 License
 

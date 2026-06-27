@@ -5,13 +5,65 @@
 
 const JSON_HEADERS = { 'Content-Type': 'application/json; charset=utf-8' };
 
+// 自动建表 SQL（与 schema.sql 保持一致，幂等）
+const INIT_SQL = `
+CREATE TABLE IF NOT EXISTS messages (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  name       TEXT    NOT NULL,
+  content    TEXT    NOT NULL,
+  parent_id  INTEGER DEFAULT NULL,
+  created_at TEXT    NOT NULL DEFAULT (datetime('now', '+8 hours'))
+);
+CREATE INDEX IF NOT EXISTS idx_messages_parent_id ON messages(parent_id);
+CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at);
+`;
+
+// 同一个 isolate 内只初始化一次，避免每次请求都执行建表
+let dbReady = false;
+let dbReadyPromise = null;
+
+/**
+ * 自动初始化 D1 数据库表结构。
+ * - 首次访问时执行建表（幂等，可安全重复执行）
+ * - 同一 isolate 内只执行一次，后续请求直接放行
+ * - 表已存在时 CREATE TABLE IF NOT EXISTS 不会改动数据
+ */
+async function ensureDb(env) {
+  if (dbReady) return;
+  if (dbReadyPromise) return dbReadyPromise;
+
+  dbReadyPromise = (async () => {
+    try {
+      if (!env.DB) {
+        throw new Error('未绑定 D1 数据库，请在 wrangler.toml 中配置 [[d1_databases]]');
+      }
+      await env.DB.batch(INIT_SQL.trim().split(';').filter((s) => s.trim()));
+      dbReady = true;
+    } catch (err) {
+      // 失败则重置，允许下次请求重试
+      dbReadyPromise = null;
+      throw err;
+    }
+  })();
+  return dbReadyPromise;
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const { pathname } = url;
 
-    // API 路由
+    // API 路由：先确保数据库表已初始化
     if (pathname.startsWith('/api/')) {
+      try {
+        await ensureDb(env);
+      } catch (err) {
+        console.error('DB init error:', err);
+        return json(
+          { error: '数据库初始化失败：' + (err?.message || String(err)) },
+          500
+        );
+      }
       return handleApi(request, env);
     }
 
