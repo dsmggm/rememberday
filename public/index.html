@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Remember Day · 纪念日主页</title>
+  <meta name="description" content="纪念日 + 搜索 + 留言板" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <!-- 背景装饰 -->
+  <div class="bg-decor" aria-hidden="true">
+    <span class="blob blob-1"></span>
+    <span class="blob blob-2"></span>
+    <span class="blob blob-3"></span>
+  </div>
+
+  <div class="container">
+    <!-- 顶部栏 -->
+    <header class="topbar">
+      <span class="logo">Remember Day</span>
+      <button id="setHomeBtn" class="btn-home" title="将本页设为浏览器主页">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>
+        设为主页
+      </button>
+    </header>
+
+    <!-- 纪念日 -->
+    <section class="anniversary">
+      <div class="hearts">❤</div>
+      <h1 class="anni-title">
+        <span id="personA">A</span>
+        <span class="amp">与</span>
+        <span id="personB">B</span>
+        <span class="amp">已经在一起</span>
+      </h1>
+      <div class="anni-duration">
+        <span id="years">0</span><i>年</i>
+        <span id="months">0</span><i>月</i>
+        <span id="days">0</span><i>天</i>
+      </div>
+      <p class="anni-total">在一起 <strong id="totalDays">0</strong> 天</p>
+    </section>
+
+    <!-- 搜索框 -->
+    <section class="search-section">
+      <form id="searchForm" class="search-box">
+        <div class="engine-switch">
+          <button type="button" class="engine-btn active" data-engine="baidu">百度</button>
+          <button type="button" class="engine-btn" data-engine="bing">Bing</button>
+          <button type="button" class="engine-btn" data-engine="google">Google</button>
+        </div>
+        <input
+          type="text"
+          id="searchInput"
+          class="search-input"
+          placeholder="输入关键词，回车搜索…"
+          autocomplete="off"
+        />
+        <button type="submit" class="search-btn" aria-label="搜索">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        </button>
+      </form>
+    </section>
+
+    <!-- 留言板 -->
+    <section class="board">
+      <h2 class="board-title">留言板</h2>
+
+      <!-- 发布留言 -->
+      <form id="msgForm" class="msg-form card">
+        <input type="text" id="msgName" class="msg-input" placeholder="你的昵称（选填）" maxlength="30" />
+        <textarea id="msgContent" class="msg-textarea" placeholder="写下你想说的话…" maxlength="500" rows="3"></textarea>
+        <div class="msg-form-foot">
+          <span id="charCount" class="char-count">0/500</span>
+          <button type="submit" class="btn-primary">发表留言</button>
+        </div>
+      </form>
+
+      <!-- 留言列表 -->
+      <div id="msgList" class="msg-list">
+        <p class="loading-tip">留言加载中…</p>
+      </div>
+    </section>
+
+    <footer class="footer">Made with ❤ on Cloudflare Workers</footer>
+  </div>
+
+  <!-- 设为主页提示 -->
+  <div id="homeTip" class="toast" hidden></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

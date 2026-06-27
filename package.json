@@ -1,0 +1,24 @@
+{
+  "name": "rememberday",
+  "version": "1.0.0",
+  "description": "一个基于 Cloudflare Workers 的纪念日 + 搜索 + 留言板主页应用",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:create": "wrangler d1 create RememberDay",
+    "db:init": "wrangler d1 execute RememberDay --file=./schema.sql",
+    "db:init:remote": "wrangler d1 execute RememberDay --remote --file=./schema.sql"
+  },
+  "keywords": [
+    "cloudflare-workers",
+    "d1",
+    "anniversary",
+    "message-board",
+    "homepage"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}
