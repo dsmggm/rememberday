@@ -28,73 +28,35 @@ rememberday/
 └── README.md
 ```
 
-## 🚀 部署指南（GitHub 导入方式，全程无需命令行）
+## 🚀 部署指南（GitHub 导入方式）
 
-本项目推荐通过 **Cloudflare 控制台导入 GitHub 仓库** 的方式部署，连接后每次 push 代码都会自动重新构建部署。
+Cloudflare 创建 Worker 时可直接选择你的 GitHub 仓库，连接后每次 push 代码都会自动重新构建部署。
 
-### 前置准备
+> 📌 **部署前请在仓库 `wrangler.toml` 中完成两项配置**（否则部署会报错）：
+> - 创建 D1 数据库 `RememberDay`（控制台 → Workers & Pages → D1 → Create database），将返回的 **Database ID** 填入 `wrangler.toml` 的 `database_id` 字段
+> - 修改 `[vars]` 段中的 `PERSON_A`、`PERSON_B`、`START_DATE` 为你的纪念日信息
 
-- 一个 **GitHub** 账号
-- 一个 **Cloudflare** 账号（免费即可）
+### 第 1 步：创建 Worker 并导入 GitHub 仓库
 
-### 第 1 步：Fork 仓库
-
-将本项目 Fork 到你自己的 GitHub 账号下（项目右上角 Fork 按钮）。
-
-### 第 2 步：在 Cloudflare 创建 D1 数据库
-
-1. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com/)
-2. 左侧菜单进入 **Workers & Pages** → **D1**
-3. 点击 **Create database**
-4. **Database name** 填入 `RememberDay`，点击创建
-5. 创建完成后，在数据库详情页找到 **Database ID**（形如 `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`），复制备用
-
-### 第 3 步：在 GitHub 仓库中填写数据库 ID 和纪念日信息
-
-在你 Fork 的仓库中，使用 GitHub 网页编辑器（点击文件右上角铅笔图标）编辑 [`wrangler.toml`](./wrangler.toml)：
-
-```toml
-[[d1_databases]]
-binding = "DB"
-database_name = "RememberDay"
-database_id = "在此粘贴第 2 步复制的 Database ID"   # ← 必须替换为真实 ID
-```
-
-同时修改 `[vars]` 段为你自己的纪念日信息：
-
-```toml
-[vars]
-PERSON_A = "啊浪"          # 第一位主角名字
-PERSON_B = "小庄"          # 第二位主角名字
-START_DATE = "2020-01-01"  # 在一起的起始日期（YYYY-MM-DD）
-```
-
-保存后提交更改（Commit changes）。
-
-> ⚠️ **重要**：`database_id` 必须替换为真实值，否则构建部署时会报错。Worker 名称（`name = "rememberday"`）请勿修改，需与下一步控制台中的 Worker 名称保持一致。
-
-### 第 4 步：在 Cloudflare 导入 GitHub 仓库
-
-1. 回到 Cloudflare Dashboard → **Workers & Pages**
-2. 点击 **Create application**
-3. 选择 **Import a repository** → **Get started**
-4. 首次使用需授权 Cloudflare 访问你的 GitHub 账号，授权后选择你 Fork 的 `rememberday` 仓库
-5. 配置项目（按如下填写）：
+1. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com/) → **Workers & Pages**
+2. 点击 **Create application** → **Import a repository** → **Get started**
+3. 首次使用需授权 Cloudflare 访问你的 GitHub 账号，授权后选择本项目的仓库
+4. 填写项目配置：
 
    | 配置项 | 填写内容 |
    | --- | --- |
-   | **Worker name** | `rememberday`（必须与 `wrangler.toml` 中的 `name` 一致） |
-   | **Production branch** | `main`（默认即可） |
+   | **Worker name** | `rememberday`（须与 `wrangler.toml` 中的 `name` 一致） |
+   | **Production branch** | `main` |
    | **Build command** | 留空（本项目无需构建步骤） |
-   | **Deploy command** | 保持默认 `npx wrangler deploy` |
+   | **Deploy command** | `npx wrangler deploy` |
 
-6. 点击 **Save and Deploy**
+5. 点击 **Save and Deploy**
 
-### 第 5 步：验证部署
+### 第 2 步：验证部署
 
-- 部署过程中，可在 Worker 详情页的 **Deployments** 标签查看构建状态与日志
-- 构建成功后，访问 `https://rememberday.<你的子域>.workers.dev` 即可看到页面
-- **首次访问时 Worker 会自动创建数据库表**（留言板立即可用，无需手动建表）
+- 在 Worker 详情页 **Deployments** 标签查看构建状态与日志
+- 构建成功后访问 `https://rememberday.<你的子域>.workers.dev` 即可看到页面
+- **首次访问时 Worker 会自动创建数据库表**，留言板立即可用
 
 ### 后续更新（持续集成）
 
