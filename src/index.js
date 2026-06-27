@@ -124,28 +124,19 @@ export class MessagesDB extends DurableObject {
 /* ================================================================== */
 export default {
   async fetch(request, env, ctx) {
-    try {
-      const url = new URL(request.url);
-      const { pathname } = url;
+    const url = new URL(request.url);
+    const { pathname } = url;
 
-      // API 路由：转发给 Durable Object 处理
-      if (pathname.startsWith('/api/')) {
-        // 用固定名称获取唯一的留言板 DO 实例
-        const id = env.MESSAGES.idFromName('global');
-        const stub = env.MESSAGES.get(id);
-        return await handleApi(request, env, stub);
-      }
-
-      // 其余请求交给静态资源处理（前端页面）
-      return env.ASSETS.fetch(request);
-    } catch (err) {
-      // 全局兜底：确保任何异常都返回可见的错误信息，而不是空白响应
-      console.error('Worker fetch error:', err);
-      return new Response(
-        '服务器内部错误：' + (err?.message || String(err)),
-        { status: 500, headers: { 'Content-Type': 'text/plain; charset=utf-8' } }
-      );
+    // API 路由：转发给 Durable Object 处理
+    if (pathname.startsWith('/api/')) {
+      // 用固定名称获取唯一的留言板 DO 实例
+      const id = env.MESSAGES.idFromName('global');
+      const stub = env.MESSAGES.get(id);
+      return handleApi(request, env, stub);
     }
+
+    // 其余请求交给静态资源处理（前端页面）
+    return env.ASSETS.fetch(request);
   },
 };
 
